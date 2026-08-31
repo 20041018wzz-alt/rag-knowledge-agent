@@ -53,6 +53,12 @@ python agent.py --ask "公司食堂几点开门？"   # 无相关知识 → 明�
 python chat_service.py
 ```
 
+## 📸 界面预览
+
+![聊天界面](docs/screenshot.png)
+
+左侧粘贴文档入库，右侧多轮问答：SSE 流式状态、回答引用来源可折叠查看、知识库外问题自动兜底。
+
 ## 🔧 配置真实模型（可选）
 
 复制 `.env.example` 为 `.env` 并填写：
