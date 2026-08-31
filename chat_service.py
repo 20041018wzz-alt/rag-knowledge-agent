@@ -108,6 +108,15 @@ def new_trace_id() -> str:
     return uuid.uuid4().hex[:16]
 
 
+@app.get("/")
+async def index():
+    """Web 聊天界面。"""
+    import os
+    path = os.path.join(os.path.dirname(__file__), "templates", "index.html")
+    from fastapi.responses import FileResponse
+    return FileResponse(path)
+
+
 @app.get("/health")
 async def health():
     return {"status": "ok", "knowledge_chunks": get_agent().knowledge_size()}

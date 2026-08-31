@@ -31,6 +31,13 @@ def test_health():
     assert r.json()["status"] == "ok"
 
 
+def test_index_serves_chat_ui():
+    r = client.get("/")
+    assert r.status_code == 200
+    assert "text/html" in r.headers["content-type"]
+    assert "RAG 企业知识库问答" in r.text
+
+
 def test_chat_hit_returns_structure():
     r = client.post("/api/chat", json={"message": "报销超过多少钱需要二次审批？", "history": []})
     assert r.status_code == 200

@@ -9,6 +9,7 @@
 ## ✨ 特性
 
 - 📄 **文档入库管线**：Markdown/TXT（可选 PDF）→ 标题感知 + 重叠窗口切分 → Embedding 向量化 → 向量库
+- 💬 **Web 聊天界面**：浏览器即用，流式状态展示、引用来源折叠查看、在线加知识
 - 🔍 **检索增强问答**：Query Rewrite 多轮改写 → 余弦相似度 top-k → LLM 带 `[n]` 引用生成
 - 🛡️ **防幻觉设计**：相关性阈值护栏（低于阈值明确回复"知识库中没有相关信息"）+ 引用溯源可验证
 - 🔌 **三档 Embedding**：OpenAI 兼容 API / 本地 BGE / Mock，工厂选择 + 失败自动降级
@@ -48,7 +49,7 @@ python ingest.py --dir examples
 python agent.py --ask "报销超过多少钱需要二次审批？"
 python agent.py --ask "公司食堂几点开门？"   # 无相关知识 → 明确兜底
 
-# 3. 启动 Web 服务 → http://127.0.0.1:8000/docs
+# 3. 启动 Web 服务 → 浏览器打开 http://127.0.0.1:8000 使用聊天界面
 python chat_service.py
 ```
 
@@ -75,6 +76,7 @@ EMBEDDING_API_MODEL=BAAI/bge-m3
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
+| GET | `/` | Web 聊天界面（流式状态 + 引用展示 + 在线入库） |
 | POST | `/api/chat` | 普通问答，返回 `{answer, references, sources, has_knowledge}` |
 | POST | `/chat/stream` | SSE 流式：阶段状态（分析/改写/检索/生成）+ 最终回答 |
 | POST | `/api/ingest` | 在线加知识：`{text, source}` |

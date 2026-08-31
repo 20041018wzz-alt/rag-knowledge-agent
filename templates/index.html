@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG 企业知识库问答 Agent</title>
+<style>
+  :root {
+    --accent: #2563eb; --accent-dark: #1d4ed8; --bg: #f1f5f9; --card: #ffffff;
+    --border: #e2e8f0; --text: #1e293b; --muted: #64748b; --ok: #16a34a;
+    --user-bubble: #2563eb; --ai-bubble: #ffffff; --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+         background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; }
+  header { background: var(--card); border-bottom: 1px solid var(--border);
+           padding: 12px 20px; display: flex; align-items: center; gap: 12px; }
+  header h1 { font-size: 17px; font-weight: 600; }
+  header .badge { font-size: 12px; padding: 3px 10px; border-radius: 999px; background: #eff6ff; color: var(--accent); }
+  header .badge.ok { background: #f0fdf4; color: var(--ok); }
+  header .spacer { flex: 1; }
+  header a { font-size: 13px; color: var(--muted); text-decoration: none; }
+  main { flex: 1; display: flex; min-height: 0; }
+  /* ── 侧栏：知识库管理 ── */
+  aside { width: 300px; background: var(--card); border-right: 1px solid var(--border);
+          padding: 16px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; }
+  aside h2 { font-size: 14px; color: var(--muted); font-weight: 600; }
+  aside textarea { width: 100%; height: 130px; border: 1px solid var(--border); border-radius: 8px;
+                   padding: 10px; font-size: 13px; resize: vertical; font-family: inherit; }
+  aside input { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 13px; }
+  aside button { background: var(--accent); color: #fff; border: none; border-radius: 8px;
+                 padding: 9px; font-size: 13px; cursor: pointer; }
+  aside button:hover { background: var(--accent-dark); }
+  aside button:disabled { background: #94a3b8; cursor: not-allowed; }
+  .kb-stats { font-size: 12px; color: var(--muted); }
+  .kb-hint { font-size: 12px; color: var(--muted); line-height: 1.6; background: #f8fafc;
+             border: 1px dashed var(--border); border-radius: 8px; padding: 10px; }
+  /* ── 聊天区 ── */
+  .chat { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+  .msg { max-width: 78%; padding: 10px 14px; border-radius: var(--radius); font-size: 14px;
+         line-height: 1.7; white-space: pre-wrap; word-break: break-word; }
+  .msg.user { align-self: flex-end; background: var(--user-bubble); color: #fff;
+              border-bottom-right-radius: 4px; }
+  .msg.ai { align-self: flex-start; background: var(--ai-bubble); border: 1px solid var(--border);
+            border-bottom-left-radius: 4px; }
+  .msg.status { align-self: center; background: transparent; color: var(--muted);
+                font-size: 12px; padding: 2px 10px; }
+  .msg.err { align-self: flex-start; background: #fef2f2; color: #b91c1c;
+             border: 1px solid #fecaca; }
+  .refs { margin-top: 8px; border-top: 1px dashed var(--border); padding-top: 8px; }
+  .refs .ref-title { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .ref { font-size: 12px; color: var(--muted); background: #f8fafc; border: 1px solid var(--border);
+         border-radius: 6px; padding: 6px 8px; margin-bottom: 4px; cursor: pointer; }
+  .ref:hover { background: #eff6ff; }
+  .ref .src { color: var(--accent); font-weight: 600; }
+  .inputbar { display: flex; gap: 10px; padding: 14px 20px; background: var(--card);
+              border-top: 1px solid var(--border); }
+  .inputbar input { flex: 1; border: 1px solid var(--border); border-radius: 10px; padding: 11px 14px;
+                    font-size: 14px; }
+  .inputbar input:focus { outline: none; border-color: var(--accent); }
+  .inputbar button { background: var(--accent); color: #fff; border: none; border-radius: 10px;
+                     padding: 0 22px; font-size: 14px; cursor: pointer; }
+  .inputbar button:hover { background: var(--accent-dark); }
+  .inputbar button:disabled { background: #94a3b8; cursor: not-allowed; }
+  footer { font-size: 12px; color: var(--muted); text-align: center; padding: 6px; background: var(--card); }
+</style>
+</head>
+<body>
+<header>
+  <h1>📚 RAG 知识库问答 Agent</h1>
+  <span class="badge" id="mode-badge">Mock 模式</span>
+  <span class="badge ok" id="kb-badge">知识库：0 片段</span>
+  <span class="spacer"></span>
+  <a href="/docs" target="_blank">API 文档 ↗</a>
+</header>
+
+<main>
+  <aside>
+    <h2>📥 知识库管理</h2>
+    <textarea id="doc-text" placeholder="粘贴一段文档内容（支持 Markdown 标题）…&#10;例如：# 报销政策&#10;超过 2000 元的报销需部门负责人二次审批。"></textarea>
+    <input id="doc-source" placeholder="来源名称，如 policy.md" value="manual">
+    <button id="ingest-btn">入库到知识库</button>
+    <div class="kb-stats" id="ingest-result"></div>
+
+    <h2>💡 说明</h2>
+    <div class="kb-hint">
+      当前为 <b>Mock 模式</b>（无需 API Key）：LLM 返回检索到的片段供联调。<br><br>
+      配置 <code>.env</code> 中的 <code>LLM_API_KEY</code> 与 <code>EMBEDDING_BACKEND=api</code>
+      后重启服务，即为真实 RAG 问答（带引用）。
+    </div>
+  </aside>
+
+  <section class="chat">
+    <div class="messages" id="messages"></div>
+    <div class="inputbar">
+      <input id="q" placeholder="输入问题，回车发送…" autocomplete="off">
+      <button id="send-btn">发送</button>
+    </div>
+  </section>
+</main>
+
+<footer>trace_id 全链路追踪 · SSE 流式 · 引用溯源 · 无相关知识自动兜底</footer>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let history = [];          // 多轮上下文 [{role, content}]
+let traceId = "";
+
+function esc(s) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function addMsg(text, cls) {
+  const div = document.createElement("div");
+  div.className = "msg " + cls;
+  div.innerHTML = text;    // 调用方已 esc
+  $("messages").appendChild(div);
+  $("messages").scrollTop = $("messages").scrollHeight;
+  return div;
+}
+
+function addStatus(text) {
+  const div = document.createElement("div");
+  div.className = "msg status";
+  div.textContent = text;
+  $("messages").appendChild(div);
+  $("messages").scrollTop = $("messages").scrollHeight;
+}
+
+function renderAnswer(data) {
+  let html = esc(data.answer || "（无回答）");
+  if (data.references && data.references.length) {
+    html += '<div class="refs"><div class="ref-title">📎 引用来源（点击查看片段）</div>';
+    data.references.forEach((r) => {
+      html += `<div class="ref" onclick="this.querySelector('.txt').style.display=this.querySelector('.txt').style.display==='none'?'block':'none'">
+        <span class="src">[${r.index}] ${esc(r.source || '未知来源')}</span>
+        <span class="txt" style="display:none;display:block;">${esc(r.text)}</span></div>`;
+    });
+    html += "</div>";
+  }
+  return html;
+}
+
+async function refreshStats() {
+  try {
+    const r = await fetch("/api/knowledge");
+    const data = await r.json();
+    $("kb-badge").textContent = `知识库：${data.chunks} 片段`;
+  } catch (e) {}
+}
+
+async function ingest() {
+  const text = $("doc-text").value.trim();
+  if (!text) return;
+  const btn = $("ingest-btn");
+  btn.disabled = true;
+  try {
+    const r = await fetch("/api/ingest", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, source: $("doc-source").value.trim() || "manual" }),
+    });
+    const data = await r.json();
+    $("ingest-result").textContent = data.ok
+      ? `✅ 已入库 ${data.chunks} 个片段（共 ${data.total}）`
+      : `❌ ${data.error || "入库失败"}`;
+    $("doc-text").value = "";
+    refreshStats();
+  } catch (e) {
+    $("ingest-result").textContent = "❌ 请求失败";
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function send() {
+  const q = $("q").value.trim();
+  if (!q || $("send-btn").disabled) return;
+  $("q").value = "";
+  $("send-btn").disabled = true;
+
+  addMsg(esc(q), "user");
+  const aiDiv = addMsg('<span style="color:#94a3b8">…</span>', "ai");
+
+  history.push({ role: "user", content: q });
+
+  try {
+    const resp = await fetch("/chat/stream", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: q, history: history.slice(-10) }),
+    });
+    traceId = resp.headers.get("X-Trace-Id") || "";
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+
+      let idx;
+      while ((idx = buf.indexOf("\n\n")) >= 0) {
+        const frame = buf.slice(0, idx);
+        buf = buf.slice(idx + 2);
+        for (const line of frame.split("\n")) {
+          if (!line.startsWith("data: ")) continue;
+          const payload = line.slice(6);
+          if (payload === "[DONE]") continue;
+          try {
+            const evt = JSON.parse(payload);
+            if (evt.type === "status") {
+              addStatus("· " + evt.content);
+            } else if (evt.type === "response" && evt.data) {
+              aiDiv.innerHTML = renderAnswer(evt.data);
+              history.push({ role: "assistant", content: evt.data.answer || "" });
+              if (evt.data.has_knowledge === false) {
+                addStatus("（知识库未命中，已兜底拒绝编造）");
+              }
+            }
+          } catch (e) {}
+        }
+      }
+    }
+    $("messages").scrollTop = $("messages").scrollHeight;
+  } catch (e) {
+    aiDiv.innerHTML = '<span style="color:#b91c1c">请求失败，请确认服务已启动。</span>';
+  } finally {
+    $("send-btn").disabled = false;
+    $("q").focus();
+  }
+}
+
+$("send-btn").onclick = send;
+$("q").addEventListener("keydown", (e) => { if (e.key === "Enter") send(); });
+$("ingest-btn").onclick = ingest;
+
+// 初始化
+refreshStats();
+fetch("/health").then(r => r.json()).then(d => {
+  if (d.status === "ok") { /* 服务在线 */ }
+}).catch(() => {});
+</script>
+</body>
+</html>
