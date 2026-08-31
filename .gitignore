@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+
+# 环境与密钥（绝不提交）
+.env
+.env.local
+
+# 运行时数据（知识库索引/向量库）
+data/*.json
+data/chroma/
+!data/.gitkeep
+
+# 测试与工具缓存
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.mypy_cache/
+.ruff_cache/
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# 日志
+*.log
+log/

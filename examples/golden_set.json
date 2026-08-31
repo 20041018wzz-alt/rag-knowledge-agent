@@ -1,0 +1,27 @@
+[
+  {
+    "question": "报销超过多少钱需要二次审批？",
+    "expected_sources": ["company_manual.md"],
+    "expected_keyword": "2000"
+  },
+  {
+    "question": "员工每个月可以申请几天远程办公？",
+    "expected_sources": ["company_manual.md"],
+    "expected_keyword": "4 天"
+  },
+  {
+    "question": "企业版智能客服每个坐席每月多少钱？",
+    "expected_sources": ["product_faq.md"],
+    "expected_keyword": "199"
+  },
+  {
+    "question": "支持私有化部署吗？",
+    "expected_sources": ["product_faq.md"],
+    "expected_keyword": "私有化"
+  },
+  {
+    "question": "入职多久可以申请更换电脑？",
+    "expected_sources": ["company_manual.md"],
+    "expected_keyword": "3 年"
+  }
+]

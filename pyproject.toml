@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rag-knowledge-agent"
+version = "1.0.0"
+description = "RAG 企业知识库问答 Agent：文档切分向量化入库，检索增强 + LLM 带引用作答，支持 SSE 流式、多轮改写、无相关知识兜底，Mock 模式无需 API Key。"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Wang Zhizun" }]
+keywords = ["rag", "llm", "agent", "fastapi", "langchain", "vector-search"]
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn>=0.29",
+    "httpx>=0.27",
+    "pydantic>=2.5",
+    "python-dotenv>=1.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+local-embedding = ["sentence-transformers>=3.0"]
+chroma = ["chromadb>=0.5"]
+pdf = ["pdfplumber>=0.11"]
+
+[tool.setuptools]
+py-modules = [
+    "config", "chunker", "embeddings", "vector_store",
+    "ingest", "retriever", "agent", "chat_service", "evaluate",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

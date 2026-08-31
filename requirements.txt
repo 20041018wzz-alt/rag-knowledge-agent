@@ -1,0 +1,14 @@
+# 运行时依赖（基础安装即可跑通 Mock 模式全链路）
+fastapi>=0.110
+uvicorn>=0.29
+httpx>=0.27
+pydantic>=2.5
+python-dotenv>=1.0
+
+# ── 可选能力（按需安装，Docker 基础镜像默认不装）──
+# 本地 BGE embedding（需能安装 torch）
+# sentence-transformers>=3.0
+# Chroma 向量库（生产可换）
+# chromadb>=0.5
+# PDF 文档解析
+# pdfplumber>=0.11

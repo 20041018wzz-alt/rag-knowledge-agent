@@ -1,0 +1,14 @@
+# RAG 知识库问答 Agent - 一键部署
+# 用法：cp .env.example .env（按需填 Key）→ docker compose up -d --build
+services:
+  rag-knowledge-agent:
+    build: .
+    container_name: rag-knowledge-agent
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      # 知识库索引持久化到宿主机（重启/重建容器不丢数据）
+      - ./data:/app/data
+    restart: unless-stopped
