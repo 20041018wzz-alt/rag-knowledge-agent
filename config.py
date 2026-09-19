@@ -37,5 +37,15 @@ RELEVANCE_THRESHOLD = float(os.getenv("RELEVANCE_THRESHOLD", "0.25"))
 DATA_DIR = os.getenv("DATA_DIR", os.path.join(os.path.dirname(__file__), "data"))
 KNOWLEDGE_INDEX = os.path.join(DATA_DIR, "knowledge_index.json")  # Memory 向量库持久化文件
 
+# ── 向量库（选型：pgvector 生产 / Chroma 本地 / Memory 兜底）──
+# auto：按 pgvector → Chroma → Memory 优先级自动降级；也可强制单个后端。
+VECTOR_STORE_BACKEND = os.getenv("VECTOR_STORE_BACKEND", "auto")
+# pgvector 连接串；留空则跳过 pgvector 直接降级（保证离线可跑）
+DATABASE_URL = os.getenv("DATABASE_URL", "")
+PGVECTOR_TABLE = os.getenv("PGVECTOR_TABLE", "knowledge_chunks")
+# 建表维度：留 0 = 由首次入库的向量维度自动决定（推荐）。
+# 显式指定（如 1024 对应 BGE-M3）可让 HNSW 索引在启动时就建好。
+PGVECTOR_DIM = int(os.getenv("PGVECTOR_DIM", "0"))
+
 # ── 日志 ──
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")

@@ -1,6 +1,26 @@
-# RAG 知识库问答 Agent - 一键部署
+# RAG 知识库问答 Agent - 一键部署（应用 + pgvector）
 # 用法：cp .env.example .env（按需填 Key）→ docker compose up -d --build
+# 不填 DATABASE_URL 也能起（自动降级 Memory 向量库），但推荐用默认的 pgvector 服务。
 services:
+  db:
+    # pgvector 官方镜像（PostgreSQL 16 + pgvector ≥ 0.5，支持 HNSW 索引）
+    image: pgvector/pgvector:pg16
+    container_name: rag-pgvector
+    environment:
+      POSTGRES_USER: rag
+      POSTGRES_PASSWORD: rag
+      POSTGRES_DB: rag
+    ports:
+      - "5433:5432"  # 映射 5433，避免与宿主机已有 5432 冲突
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rag -d rag"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
   rag-knowledge-agent:
     build: .
     container_name: rag-knowledge-agent
@@ -8,7 +28,17 @@ services:
       - "8000:8000"
     env_file:
       - .env
+    environment:
+      # 容器内走服务名 db（宿主机直接跑时用 postgresql://rag:rag@localhost:5433/rag）
+      DATABASE_URL: postgresql://rag:rag@db:5432/rag
+      VECTOR_STORE_BACKEND: auto
+    depends_on:
+      db:
+        condition: service_healthy
     volumes:
       # 知识库索引持久化到宿主机（重启/重建容器不丢数据）
       - ./data:/app/data
     restart: unless-stopped
+
+volumes:
+  pgdata:

@@ -13,9 +13,9 @@
 - 🔍 **检索增强问答**：Query Rewrite 多轮改写 → 余弦相似度 top-k → LLM 带 `[n]` 引用生成
 - 🛡️ **防幻觉设计**：相关性阈值护栏（低于阈值明确回复"知识库中没有相关信息"）+ 引用溯源可验证
 - 🔌 **三档 Embedding**：OpenAI 兼容 API / 本地 BGE / Mock，工厂选择 + 失败自动降级
-- 🗄️ **向量库抽象**：Chroma（可选）与纯 Python 内存实现（JSON 持久化）双后端，线程安全
+- 🗄️ **向量库三级降级**：**pgvector（生产）** → Chroma（本地）→ 纯 Python 内存（JSON 持久化），统一 `VectorStore` 接口，任一后端不可用自动降级，线程安全；pgvector 侧带 HNSW 余弦索引与「维度守卫」
 - 📡 **FastAPI 服务**：`/api/chat`、`/chat/stream`（SSE）、`/api/ingest` 在线加知识、`/health`，自动 OpenAPI 文档
-- 🧪 **可评测**：golden set 召回率/准确率评估脚本 + 25 个 pytest（全离线）
+- 🧪 **可评测**：golden set 召回率/准确率评估脚本 + 44 个 pytest（全离线，含 pgvector 后端单测）
 - 🐳 **生产部署**：Dockerfile（非 root + HEALTHCHECK）+ docker-compose 持久化
 
 ## 🏗️ 架构
@@ -25,7 +25,7 @@ flowchart LR
     subgraph 入库链路
         A[文档 MD/TXT/PDF] --> B[chunker 切分<br/>标题感知+重叠窗口]
         B --> C[Embedding<br/>api/local/mock]
-        C --> D[(向量库<br/>Chroma/Memory)]
+        C --> D[(向量库<br/>pgvector/Chroma/Memory)]
     end
     subgraph 问答链路
         Q[用户提问] --> R[Query Rewrite<br/>多轮改写]
@@ -116,8 +116,21 @@ docker compose up -d --build  # http://localhost:8000/docs
 ```
 
 - 镜像：`python:3.12-slim`，非 root 运行，内置 HEALTHCHECK
-- 数据卷：`./data` 持久化知识库索引（重建容器不丢数据）
-- 生产建议：前置 Nginx/网关做 TLS 与限流；多实例时挂载共享数据卷（或换 Chroma/Milvus）
+- **数据库**：`pgvector/pgvector:pg16` 一并拉起，应用通过 `DATABASE_URL` 连接（健康检查通过后再启动）
+- 数据卷：`./data` 持久化知识库索引，`pgdata` 持久化向量数据（重建容器不丢数据）
+- 生产建议：前置 Nginx/网关做 TLS 与限流；数据量再上台阶或要求极致检索吞吐时，接口不变可直接换 Milvus
+
+### 向量库选型说明
+
+| 后端 | 适用场景 | 说明 |
+| --- | --- | --- |
+| **pgvector**（默认） | 生产 / 企业内网 | 向量与业务数据同库同事务，复用 PG 备份、权限、连接池；HNSW 余弦索引，百万级向量可满足低延迟检索 |
+| Chroma | 本地开发 / 单机 Demo | 零依赖、文件级持久化，启动最快 |
+| Memory | 离线演示 / CI 测试 | 纯 Python 余弦检索 + JSON 持久化，保证无任何外部依赖也能跑通全链路 |
+
+`VECTOR_STORE_BACKEND=auto`（默认）按上表顺序自动降级；也可强制指定单个后端。
+pgvector 后端带**维度守卫**：换 embedding 后端导致向量维度变化时会显式报错，
+避免「查得出结果但相似度全错」的静默故障。
 
 ## 📁 项目结构
 
@@ -126,16 +139,16 @@ rag-knowledge-agent/
 ├── config.py            # 配置（环境变量，见 .env.example）
 ├── chunker.py           # 文档切分：标题感知 + 段落聚合 + 重叠窗口
 ├── embeddings.py        # Embedding 抽象：api / local / mock + 工厂
-├── vector_store.py      # 向量库抽象：Chroma / Memory（线程安全 + JSON 持久化）
+├── vector_store.py      # 向量库抽象：pgvector / Chroma / Memory（自动降级 + 线程安全）
 ├── ingest.py            # 入库管线（CLI：--dir/--file/--clear）
 ├── retriever.py         # 检索 + Query Rewrite + 相关性阈值
 ├── agent.py             # RAG Agent：引用溯源 / 无知识兜底 / LLM Mock
 ├── chat_service.py      # FastAPI 服务（CORS / 全局异常 / trace_id 日志）
 ├── evaluate.py          # golden set 评测（召回率 / 准确率）
 ├── examples/            # 示例知识文档 + golden set
-├── tests/               # 25 个 pytest（单元 + 接口）
+├── tests/               # 44 个 pytest（单元 + 接口 + pgvector 后端，全离线）
 ├── Dockerfile           # 生产镜像（非 root + HEALTHCHECK）
-├── docker-compose.yml   # 一键部署（数据卷持久化）
+├── docker-compose.yml   # 一键部署（应用 + pgvector + 数据卷持久化）
 └── .github/workflows/   # CI：三平台 × 三 Python 版本跑测试
 ```
 

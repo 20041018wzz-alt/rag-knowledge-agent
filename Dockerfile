@@ -7,6 +7,9 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# pgvector 驱动：镜像内的默认生产向量库后端（连不上 DB 仍自动降级 Memory）
+RUN pip install --no-cache-dir "psycopg[binary]>=3.1" "psycopg_pool>=3.2"
+
 COPY . .
 
 # 非 root 运行（安全）

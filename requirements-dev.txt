@@ -1,2 +1,6 @@
 -r requirements.txt
 pytest>=8.0
+
+# 单元测试用：pgvector 后端的驱动 / 连接池（测试用假连接替换，不需要真实数据库）
+psycopg[binary]>=3.1
+psycopg_pool>=3.2
