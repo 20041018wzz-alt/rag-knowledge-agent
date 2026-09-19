@@ -35,7 +35,7 @@ def test_index_serves_chat_ui():
     r = client.get("/")
     assert r.status_code == 200
     assert "text/html" in r.headers["content-type"]
-    assert "RAG 企业知识库问答" in r.text
+    assert "文档检索与引用溯源" in r.text
 
 
 def test_chat_hit_returns_structure():

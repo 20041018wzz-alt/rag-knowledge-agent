@@ -1,4 +1,4 @@
-# RAG 知识库问答 Agent - 一键部署（应用 + pgvector）
+# 文档检索与引用溯源 Agent - 一键部署（应用 + pgvector）
 # 用法：cp .env.example .env（按需填 Key）→ docker compose up -d --build
 # 不填 DATABASE_URL 也能起（自动降级 Memory 向量库），但推荐用默认的 pgvector 服务。
 services:
@@ -21,9 +21,9 @@ services:
       retries: 10
     restart: unless-stopped
 
-  rag-knowledge-agent:
+  citable-knowledge-agent:
     build: .
-    container_name: rag-knowledge-agent
+    container_name: citable-knowledge-agent
     ports:
       - "8000:8000"
     env_file:

@@ -1,6 +1,6 @@
-# RAG 企业知识库问答 Agent
+# 文档检索与引用溯源 Agent
 
-[![CI](https://github.com/20041018wzz-alt/rag-knowledge-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/20041018wzz-alt/rag-knowledge-agent/actions/workflows/ci.yml)
+[![CI](https://github.com/20041018wzz-alt/citable-knowledge-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/20041018wzz-alt/citable-knowledge-agent/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](pyproject.toml)
 
@@ -39,7 +39,7 @@ flowchart LR
 ## 🚀 快速开始（Mock 模式，零配置）
 
 ```bash
-cd rag-knowledge-agent
+cd citable-knowledge-agent
 pip install -r requirements.txt
 
 # 1. 入库示例文档
@@ -135,7 +135,7 @@ pgvector 后端带**维度守卫**：换 embedding 后端导致向量维度变�
 ## 📁 项目结构
 
 ```
-rag-knowledge-agent/
+citable-knowledge-agent/
 ├── config.py            # 配置（环境变量，见 .env.example）
 ├── chunker.py           # 文档切分：标题感知 + 段落聚合 + 重叠窗口
 ├── embeddings.py        # Embedding 抽象：api / local / mock + 工厂

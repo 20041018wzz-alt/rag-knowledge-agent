@@ -71,7 +71,7 @@ def ingest_directory(dir_path: str, emb, store) -> int:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="RAG 知识库入库")
+    parser = argparse.ArgumentParser(description="文档检索入库")
     parser.add_argument("--dir", help="批量入库目录")
     parser.add_argument("--file", help="入库单个文件")
     parser.add_argument("--clear", action="store_true", help="清空知识库")

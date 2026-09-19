@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""RAG 知识库问答 - FastAPI 服务。
+"""文档检索与引用溯源 - FastAPI 服务。
 
 接口：
 - POST /api/chat          JSON 问答（返回 answer/references/sources/session_id/trace_id）
@@ -58,13 +58,13 @@ class IngestRequest(BaseModel):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("RAG 知识库问答服务启动中...")
+    logger.info("文档检索与引用溯源服务启动中...")
     yield
     logger.info("服务已关闭")
 
 
 app = FastAPI(
-    title="RAG 知识库问答 Agent",
+    title="文档检索与引用溯源 Agent",
     description="企业知识库检索增强问答：文档入库 → 向量检索 → LLM 带引用作答。"
                 "支持 SSE 流式、多轮改写、无相关知识兜底，Mock 模式下无需 API Key。",
     version="1.0.0",

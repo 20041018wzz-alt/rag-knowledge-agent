@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""RAG 知识库问答 Agent - 配置（环境变量优先，全部可离线默认）。"""
+"""文档检索与引用溯源 Agent - 配置（环境变量优先，全部可离线默认）。"""
 import os
 
 from dotenv import load_dotenv

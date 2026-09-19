@@ -158,7 +158,7 @@ class RagAgent:
 
 def main() -> None:
     import argparse
-    parser = argparse.ArgumentParser(description="RAG 知识库问答（命令行）")
+    parser = argparse.ArgumentParser(description="文档检索与引用溯源（命令行）")
     parser.add_argument("--ask", required=True, help="要问的问题")
     args = parser.parse_args()
     agent = RagAgent()

@@ -3,9 +3,9 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "rag-knowledge-agent"
+name = "citable-knowledge-agent"
 version = "1.0.0"
-description = "RAG 企业知识库问答 Agent：文档切分向量化入库，检索增强 + LLM 带引用作答，支持 SSE 流式、多轮改写、无相关知识兜底，Mock 模式无需 API Key。"
+description = "文档检索与引用溯源 Agent：文档切分向量化入库，检索增强 + LLM 带引用作答，支持 SSE 流式、多轮改写、无相关知识兜底，Mock 模式无需 API Key。"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }

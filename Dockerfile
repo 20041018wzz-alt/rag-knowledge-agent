@@ -1,4 +1,4 @@
-# RAG 知识库问答 Agent - 生产镜像
+# 文档检索与引用溯源 Agent - 生产镜像
 FROM python:3.12-slim
 
 WORKDIR /app
